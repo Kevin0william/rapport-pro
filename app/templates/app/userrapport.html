@@ -1,0 +1,550 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapports - {{ user.username }}</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+         :root {
+            --gold: #d4af37;
+            --gold-light: #f5e6a8;
+            --gold-dark: #b8962e;
+            --black: #020617;
+            --dark: #0f172a;
+            --dark-card: #1e293b;
+            --white: #ffffff;
+            --gray: #64748b;
+            --border: rgba(212, 175, 55, 0.2);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e293b 100%);
+            color: var(--white);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: -0.5px;
+        }
+        
+        .page-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .sommevente {
+            padding: 0.75rem 1.25rem;
+            background: rgba(212, 175, 55, 0.15);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .sommevente p {
+            font-size: 0.875rem;
+            color: var(--white);
+        }
+        
+        .sommevente strong {
+            color: var(--gold);
+        }
+        
+        .sommevente span {
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-left: 0.25rem;
+        }
+        
+        .back-link {
+            padding: 0.625rem 1.25rem;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--black);
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.25);
+        }
+        
+        .back-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(212, 175, 55, 0.4);
+        }
+        
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem;
+        }
+        
+        .filters-section {
+            margin-bottom: 2.5rem;
+        }
+        
+        .filters-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--gold-light);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .weeks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .week-filter {
+            padding: 1rem 1.25rem;
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .week-filter:hover {
+            border-color: var(--gold);
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-2px);
+        }
+        
+        .week-filter.active {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(212, 175, 55, 0.1));
+            border-color: var(--gold);
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+        }
+        
+        .week-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+        
+        .week-dates {
+            font-size: 0.95rem;
+            color: var(--white);
+            font-weight: 600;
+        }
+        
+        .week-count {
+            font-size: 0.75rem;
+            color: var(--gold);
+            margin-top: 0.25rem;
+        }
+        
+        .show-all-btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid var(--border);
+            color: var(--gold-light);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .show-all-btn:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: var(--gold);
+        }
+        
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            padding: 1.25rem;
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        
+        .rapports-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .rapport-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            padding: 1.75rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        
+        .rapport-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            border-color: var(--gold);
+        }
+        
+        .rapport-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .rapport-date {
+            font-size: 0.85rem;
+            color: var(--gold-light);
+            font-weight: 500;
+        }
+        
+        .rapport-time {
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-top: 0.25rem;
+        }
+        
+        .rapport-prix {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-align: right;
+        }
+        
+        .rapport-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .section-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray);
+            font-weight: 600;
+        }
+        
+        .section-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #e5e7eb;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 16px;
+            border: 2px dashed var(--border);
+        }
+        
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .empty-title {
+            font-size: 1.25rem;
+            color: var(--gray);
+            margin-bottom: 0.5rem;
+        }
+        
+        .empty-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        @media (max-width: 968px) {
+            .header-wrapper {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-right {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .sommevente {
+                text-align: left;
+            }
+            .weeks-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+            .rapports-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            header {
+                padding: 1.25rem 1.5rem;
+            }
+            .page-title {
+                font-size: 1.5rem;
+            }
+            main {
+                padding: 2rem 1.5rem;
+            }
+            .weeks-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-bar {
+                grid-template-columns: 1fr;
+            }
+            .rapport-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="header-wrapper">
+            <div class="header-left">
+                <h1 class="page-title">Rapports de {{ user.username }}</h1>
+                <p class="page-subtitle">Consultation et suivi des rapports journaliers</p>
+            </div>
+
+            <div class="header-right">
+                <div class="sommevente">
+                    <p>Vente pour la semaine du
+                        <strong>{{ start_week|date:'d F' }}</strong> au
+                        <strong>{{ end_week|date:'d F' }}</strong> :
+                        <span>{{ somme_vente|intcomma }} FCFA</span>
+                    </p>
+                </div>
+                <a href="{% url 'userlist' %}" class="back-link">← Retour</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        {% if rapports %}
+
+        <section class="filters-section">
+            <h2 class="filters-title">
+                <span>📅</span> Filtrer par semaine
+            </h2>
+            <div class="weeks-grid" id="weeksGrid"></div>
+            <button class="show-all-btn" id="showAllBtn">Afficher tous les rapports</button>
+        </section>
+
+        <section class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <div class="stat-label">Total rapports</div>
+                <div class="stat-value" id="totalReports">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Affichés</div>
+                <div class="stat-value" id="visibleReports">0</div>
+            </div>
+        </section>
+
+        <div class="rapports-container" id="rapportsContainer">
+            {% for rapport in rapports %}
+            <div class="rapport-card" data-date="{{ rapport.create_at|date:'Y-m-d' }}" data-timestamp="{{ rapport.create_at|date:'U' }}">
+                <div class="rapport-header">
+                    <div>
+                        <div class="rapport-date">{{ rapport.create_at|date:'l d F Y' }}</div>
+                        <div class="rapport-time">{{ rapport.create_at|date:'H:i' }}</div>
+                    </div>
+                    <div class="rapport-prix">{{ rapport.prix|intcomma }} FCFA</div>
+                </div>
+
+                <div class="rapport-section">
+                    <div class="section-label">Difficultés rencontrées</div>
+                    <div class="section-content">{{ rapport.probleme }}</div>
+                </div>
+
+                <div class="rapport-section">
+                    <div class="section-label">Contacts reçus</div>
+                    <div class="section-content">{{ rapport.contact }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <div class="empty-title">Aucun rapport disponible</div>
+            <div class="empty-text">Cet utilisateur n'a pas encore créé de rapport journalier.</div>
+        </div>
+        {% endif %}
+
+    </main>
+
+    <script>
+        function getWeekNumber(date) {
+            const d = new Date(date);
+            const dayOfWeek = d.getDay();
+            const diff = dayOfWeek >= 5 ? dayOfWeek - 5 : dayOfWeek + 2;
+            const weekStart = new Date(d);
+            weekStart.setDate(d.getDate() - diff);
+            weekStart.setHours(0, 0, 0, 0);
+            return weekStart.getTime();
+        }
+
+        function getWeekRange(weekStartTime) {
+            const start = new Date(weekStartTime);
+            const end = new Date(weekStartTime);
+            end.setDate(start.getDate() + 6);
+            return {
+                start,
+                end
+            };
+        }
+
+        function formatDate(date) {
+            const options = {
+                day: 'numeric',
+                month: 'short'
+            };
+            return date.toLocaleDateString('fr-FR', options);
+        }
+
+        const cards = document.querySelectorAll('.rapport-card');
+        const weeksMap = new Map();
+
+        cards.forEach(card => {
+            const timestamp = parseInt(card.dataset.timestamp) * 1000;
+            const weekStart = getWeekNumber(timestamp);
+
+            if (!weeksMap.has(weekStart)) {
+                weeksMap.set(weekStart, []);
+            }
+            weeksMap.get(weekStart).push(card);
+        });
+
+        const sortedWeeks = Array.from(weeksMap.keys()).sort((a, b) => b - a);
+        const weeksGrid = document.getElementById('weeksGrid');
+
+        sortedWeeks.forEach(weekStart => {
+            const {
+                start,
+                end
+            } = getWeekRange(weekStart);
+            const count = weeksMap.get(weekStart).length;
+
+            const weekDiv = document.createElement('div');
+            weekDiv.className = 'week-filter';
+            weekDiv.dataset.weekStart = weekStart;
+            weekDiv.innerHTML = `
+                <div class="week-label">Semaine</div>
+                <div class="week-dates">${formatDate(start)} - ${formatDate(end)}</div>
+                <div class="week-count">${count} rapport${count > 1 ? 's' : ''}</div>
+            `;
+
+            weekDiv.addEventListener('click', () => {
+                document.querySelectorAll('.week-filter').forEach(w => w.classList.remove('active'));
+                weekDiv.classList.add('active');
+
+                cards.forEach(card => {
+                    const cardWeek = getWeekNumber(parseInt(card.dataset.timestamp) * 1000);
+                    card.style.display = cardWeek === weekStart ? 'flex' : 'none';
+                });
+
+                updateStats();
+            });
+
+            weeksGrid.appendChild(weekDiv);
+        });
+
+        document.getElementById('showAllBtn').addEventListener('click', () => {
+            document.querySelectorAll('.week-filter').forEach(w => w.classList.remove('active'));
+            cards.forEach(card => card.style.display = 'flex');
+            updateStats();
+        });
+
+        function updateStats() {
+            const visible = Array.from(cards).filter(c => c.style.display !== 'none').length;
+            document.getElementById('totalReports').textContent = cards.length;
+            document.getElementById('visibleReports').textContent = visible;
+        }
+
+        updateStats();
+    </script>
+
+</body>
+
+</html>

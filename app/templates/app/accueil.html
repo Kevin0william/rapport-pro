@@ -1,0 +1,492 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport Journalier</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+         :root {
+            --gold: #d4af37;
+            --gold-light: #f5e6a8;
+            --gold-dark: #b8962e;
+            --black: #020617;
+            --dark: #0f172a;
+            --dark-card: #1e293b;
+            --white: #ffffff;
+            --gray: #64748b;
+            --border: rgba(212, 175, 55, 0.2);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e293b 100%);
+            color: var(--white);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .brand h1 {
+            color: var(--gold);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.25rem;
+        }
+        
+        .brand p {
+            color: var(--gray);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.75rem;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--white);
+        }
+        
+        .date-box {
+            padding: 0.5rem 1rem;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--gold-light);
+            text-align: center;
+            min-width: 200px;
+        }
+        
+        .sommevente {
+            padding: 0.625rem 1rem;
+            background: rgba(212, 175, 55, 0.15);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            text-align: right;
+        }
+        
+        .sommevente p {
+            color: var(--white);
+        }
+        
+        .sommevente strong {
+            color: var(--gold);
+        }
+        
+        .sommevente span {
+            color: var(--gold);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        
+        .header-links {
+            display: flex;
+            gap: 1.25rem;
+            align-items: center;
+        }
+        
+        .header-links a {
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        
+        .header-links a:hover {
+            color: var(--white);
+        }
+        
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+        
+        .box {
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            padding: 3rem;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .form-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        
+        .form-subtitle {
+            font-size: 0.95rem;
+            color: var(--gray);
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gold-light);
+            letter-spacing: 0.3px;
+        }
+        
+        input,
+        textarea {
+            padding: 0.875rem 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(2, 6, 23, 0.6);
+            color: var(--white);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--gold);
+            background: rgba(2, 6, 23, 0.8);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--gray);
+        }
+        
+        button {
+            margin-top: 1rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--black);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(212, 175, 55, 0.5);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                padding: 1.25rem 1.5rem;
+            }
+            .header-wrapper {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            .brand h1 {
+                font-size: 1.25rem;
+            }
+            .header-info {
+                align-items: flex-start;
+            }
+            .date-box {
+                min-width: 100%;
+                text-align: left;
+            }
+            .sommevente {
+                text-align: left;
+                font-size: 0.8rem;
+            }
+            main {
+                padding: 2rem 1.5rem;
+            }
+            .box {
+                padding: 2rem 1.5rem;
+            }
+            .form-title {
+                font-size: 1.5rem;
+            }
+            button {
+                padding: 0.875rem 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            header {
+                padding: 1rem;
+            }
+            .header-wrapper {
+                gap: 1rem;
+            }
+            .brand h1 {
+                font-size: 1.1rem;
+            }
+            .header-links {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            main {
+                padding: 1.5rem 1rem;
+            }
+            .box {
+                padding: 1.5rem 1rem;
+                border-radius: 16px;
+            }
+            .form-title {
+                font-size: 1.35rem;
+            }
+            form {
+                gap: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="header-wrapper">
+            <div class="brand">
+                <h1>PILOTE CONSTRUCTION SARL</h1>
+                <p>Rapport journalier</p>
+            </div>
+
+            <div class="header-info">
+                <div class="user-name">{{ user.username }}</div>
+                <div class="date-box" id="live-date"></div>
+                <div class="sommevente">
+                    <p>Vente pour la semaine du
+                        <strong>{{ start_week|date:'d F' }}</strong> au
+                        <strong>{{ end_week|date:'d F' }}</strong> :
+                        <span>{{ somme_vente|intcomma }} FCFA</span>
+                    </p>
+                </div>
+                <div class="header-links">
+                    {% if user.is_superuser %}
+                    <a href="{% url 'userlist' %}">Liste utilisateurs</a> {% endif %}
+                    <a href="{% url 'deconnexion' %}">Déconnexion</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="box">
+            <h2 class="form-title">Créer un rapport</h2>
+            <p class="form-subtitle">Complétez les informations de votre journée</p>
+
+            <form method="post" id="rapportForm">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label>Montant vendu (FCFA)</label>
+                    <input type="number" name="prix" id="prix" placeholder="Ex: 150000" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Difficultés rencontrées</label>
+                    <textarea name="probleme" id="probleme" placeholder="Décrivez les difficultés rencontrées aujourd'hui..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Contacts reçus</label>
+                    <textarea name="contact" id="contact" placeholder="Liste des contacts ou prospects reçus..." required></textarea>
+                </div>
+
+                <button type="submit">Créer le rapport</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function updateDate() {
+            const now = new Date();
+            const options = {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            };
+            const dateStr = now.toLocaleString("fr-FR", options);
+            document.getElementById("live-date").textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+        }
+        updateDate();
+        setInterval(updateDate, 1000);
+
+        document.getElementById("rapportForm").addEventListener("submit", function() {
+            const prix = document.getElementById("prix").value;
+            const probleme = document.getElementById("probleme").value;
+            const contact = document.getElementById("contact").value;
+
+            const {
+                jsPDF
+            } = window.jspdf;
+            const doc = new jsPDF();
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 20;
+            const contentWidth = pageWidth - (2 * margin);
+
+            doc.setFillColor(212, 175, 55);
+            doc.rect(0, 0, pageWidth, 35, "F");
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            doc.setTextColor(2, 6, 23);
+            doc.text("PILOTE CONSTRUCTION SARL", pageWidth / 2, 15, {
+                align: "center"
+            });
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+            doc.text("Rapport journalier", pageWidth / 2, 25, {
+                align: "center"
+            });
+
+            let y = 50;
+
+            doc.setTextColor(0, 0, 0);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.text(`Vendeur : {{ user.username }}`, margin, y);
+
+            y += 8;
+            doc.setFont("helvetica", "normal");
+            const now = new Date();
+            const dateStr = now.toLocaleString("fr-FR", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+            doc.text(`Date : ${dateStr.charAt(0).toUpperCase() + dateStr.slice(1)}`, margin, y);
+
+            y += 20;
+            doc.setFillColor(212, 175, 55);
+            doc.rect(margin, y - 8, contentWidth, 12, "F");
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(2, 6, 23);
+            doc.text("Montant vendu", margin + 3, y);
+
+            y += 12;
+            doc.setFontSize(18);
+            doc.setTextColor(212, 175, 55);
+            doc.text(`${parseInt(prix).toLocaleString('fr-FR')} FCFA`, margin, y);
+
+            y += 18;
+            doc.setFillColor(212, 175, 55);
+            doc.rect(margin, y - 8, contentWidth, 12, "F");
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(2, 6, 23);
+            doc.text("Difficultés rencontrées", margin + 3, y);
+
+            y += 12;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            const problemeLines = doc.splitTextToSize(probleme, contentWidth);
+            doc.text(problemeLines, margin, y);
+            y += (problemeLines.length * 6) + 10;
+
+            if (y > 250) {
+                doc.addPage();
+                y = 20;
+            }
+
+            doc.setFillColor(212, 175, 55);
+            doc.rect(margin, y - 8, contentWidth, 12, "F");
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(2, 6, 23);
+            doc.text("Contacts reçus", margin + 3, y);
+
+            y += 12;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            const contactLines = doc.splitTextToSize(contact, contentWidth);
+            doc.text(contactLines, margin, y);
+
+            const footerY = doc.internal.pageSize.getHeight() - 15;
+            doc.setFontSize(9);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')} par Monétiseur`, pageWidth / 2, footerY, {
+                align: "center"
+            });
+
+            const fileName = `rapport_{{ user.username }}_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+        });
+    </script>
+
+</body>
+
+</html>
