@@ -92,7 +92,7 @@ def userrapport(request, user_id):
     end_week = start_week + timedelta(days=6,hours=23,minutes=59,seconds=59)
 
     somme_vente = Rapport.objects.filter(
-        user=request.user,
+        user=user,
         create_at__range=(start_week, end_week)
     ).aggregate(total=Sum('prix'))['total'] or 0
     return render(request,'app/userrapport.html',{
